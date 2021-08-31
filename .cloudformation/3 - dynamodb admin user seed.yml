@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  CMSName:
+    Type: String
+    Default: LegoCMS
+    Description: Enter the name of your CMS, it must be unique in your AWS account
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: dynamodbAccessRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - dynamodb:*
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - logs:*
+              Resource: "*"
+  InitFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Environment:
+        Variables:
+          TableName:
+            Fn::Sub:
+              - "${CMSName}_Users"
+              - CMSName:
+                  Ref: CMSName
+      Code:
+        ZipFile: >
+          from pprint import pprint
+
+          import boto3
+
+          import os, random, string
+
+          def get_random_string(length):
+              letters = string.ascii_lowercase
+              result_str = ''.join(random.choice(letters) for i in range(length))
+              return result_str
+
+          def seed_admin_user(name, passworddynamodb=None):
+              if not dynamodb:
+                  dynamodb = boto3.resource('dynamodb')
+
+              table = dynamodb.Table(os.environ['TableName'])
+              response = table.put_item(
+                 Item={
+                      'Username': name,
+                      'Password': password
+                  }
+              )
+
+              return response
+
+          def main(event, context):
+              password = get_random_string(11)
+              seed_admin_user("Administrator", password)
+
+              return {'password': password}
+
+
+      Handler: index.main
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime: python3.9
+      Timeout: 60
+  InitializeFunction:
+    Type: Custom::InitFunction
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: [ InitFunction , "Arn" ]
+Outputs:
+  Username:
+    Value: "Administrator"
+  Password:
+    Value: !GetAtt InitFunction.password

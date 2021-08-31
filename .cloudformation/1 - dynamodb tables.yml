@@ -1,0 +1,129 @@
+---
+Parameters:
+  CMSName:
+    Type: String
+    Default: LegoCMS
+    Description: Enter the name of your CMS, it must be unique in your AWS account
+Resources:
+  DataTypesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+        - "${CMSName}_DataTypes"
+        - CMSName:
+            Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: Name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Name
+        KeyType: HASH
+  ContentBlocksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+        - "${CMSName}_ContentBlocks"
+        - CMSName:
+            Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: N
+      - AttributeName: Name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Name
+        KeyType: HASH
+      - AttributeName: Id
+        KeyType: RANGE
+  TemplatesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+        - "${CMSName}_Templates"
+        - CMSName:
+            Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: N
+      - AttributeName: Name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+      - AttributeName: Name
+        KeyType: RANGE
+  DataStorageBlocksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+        - "${CMSName}_DataStorageBlocks"
+        - CMSName:
+            Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: N
+      - AttributeName: Name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Name
+        KeyType: HASH
+      - AttributeName: Id
+        KeyType: RANGE
+  PagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+        - "${CMSName}_Pages"
+        - CMSName:
+            Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: N
+      - AttributeName: Name
+        AttributeType: S
+      - AttributeName: Slug
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Name
+        KeyType: HASH
+      - AttributeName: Id
+        KeyType: RANGE
+      GlobalSecondaryIndexes:
+      - IndexName: SlugIndex
+        KeySchema:
+        - AttributeName: Slug
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub:
+          - "${CMSName}_Users"
+          - CMSName:
+              Ref: CMSName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Username
+          KeyType: HASH
+Outputs:
+  CMSName:
+    Value:
+      Ref: CMSName
+    Export:
+      Name:
+        Ref: CMSName
